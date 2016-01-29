@@ -1,0 +1,334 @@
+% !Mode:: "TeX:UTF-8"
+
+\chapter{基于趋势预测算法的理论基础}{\label{chap:topot}}
+本论文对卫星在轨异变状态的预测算法基于两种思路进行研究，第一种是基于趋势的预测算法，第二种是基于相似度的预测算法。在本章中，将详细描述基于趋势的预测算法的理论研究，而这两种算法的理论研究和验证试验的余下内容，会在之后的章节分别中逐一介绍。
+
+在此，首先对卫星在轨异变数据进行简要的分析介绍。
+\section{卫星在轨异变数据分析} 
+
+\section{小波分析理论}
+在1984年，Morlet和Grossman提出小波（wavelet）一词，他们用的是法语词 ondelette ，意思就是“小波”。后来在英语里，“onde”被改为“wave”而成了 wavelet \citeup{grossmann1984decomposition}。小波分析算法作为一种数学理论和方法在科学界引起越来越多的重视，并被运用到各个技术领域中。
+
+由于小波具有可以自由“变焦”的自适应窗口和紧支撑性，特别适合处理卫星信号这种细节分量多而杂的信号。因此，本论文中采用小波算法对卫星在轨异变信号进行处理分析。
+
+\subsection{小波的定义}
+小波分析，即小波变换，是从傅里叶变换发展而来，其中还经历了短时傅里叶变换，最后建立小波理论。
+
+%傅里叶变换
+Fourier在1807年提出，任何函数都可以用一组正余弦函数的和来表示，这就是傅里叶分析。傅里叶变换是傅里叶分析的抽象，它是将信号分解成不同频率的数学方法。它可以将时域中某一信号变换至频域中，予以定量认识和分析，他能描述信号的整体频谱特征。从实用的角度出发，当人们考虑傅里叶分析的时候，通常指的是（积分）傅里叶变换和傅里叶级数。
+
+时间信号函数$ f(t) \in L^1(R) $ （其中$ t $表示时间域自变量），满足$ \int_{-\infty}^{+\infty}\left|f(t)\right|\mathrm{d}t < \infty $时，其连续傅里叶变换$ F(\omega) $ （其中$ \Omega $表示时间域自变量），定义为：
+\begin{equation}
+\label{equ:Fw}
+	F(\omega) = \int_{-\infty}^{+\infty} e^{-i\omega t}f(t)\mathrm{d}t
+\end{equation}
+
+$ F(\omega) $的傅里叶逆变换定义为：
+\begin{equation}
+	f(t) = {1\over2\pi} \int_{-\infty}^{+\infty} e^{-it\omega}F(\omega)\mathrm{d}\omega
+\end{equation}
+
+为了计算傅里叶变换，需要数值积分，即取$ f(t) $在$ R $上的离散点上的值来计算这个积分。下面给出离散傅里叶变换（DFT）的定义。
+
+给定的离散时间序列$f_0$,$f_1$,$\ldots$,$f_{N-1}$，设该序列绝对可和，即满足$ \sum_{n=0}^{N-1} \left|f_n\right| < \infty $时，序列$ \{ f_n \} $的离散傅里叶变换定义为：
+\begin{equation}
+\label{equ:Xk}
+	X(k) = F(f_n) = \sum_{n=0}^{N-1} f_n e^{-i {2\pi k\over N} n}\qquad
+	(k=0,1,\ldots,N-1)
+\end{equation}
+
+序列$ \{ X(k) \} $的离散傅里叶逆变换定义为：
+\begin{equation}
+	f_n = {1\over N} \sum_{k=0}^{N-1} X(k) e^{i {2\pi n\over N}}\qquad
+	(n=0,1,\ldots,N-1)
+\end{equation}
+
+%短时傅里叶变换
+虽然傅里叶变换能够将信号的时域特征和频域特征联系起来，并分别观察，但却不能把两者有机的结合起来。这是因为傅里叶变换是一种全局的变换，从式(\ref{equ:Fw})和式(\ref{equ:Xk})可以看出，它是整个时间域内的积分，没有局部分析信号的功能。也就是说，对于傅里叶谱中的某一频率，不知道这个频率是在什么时候产生的。这样在信号分析中面临一对矛盾：时域和频域的局部化矛盾。
+
+在实际的信号处理过程中，尤其是对非平稳信号的处理中，信号在任一时刻附近的频域特征都很重要。为了克服傅里叶变换在时域上无分辨率能力的缺点，Dennis Gabor引入了短时傅里叶变换（STFT），也称窗口傅里叶变换，其实质是在傅里叶变换中加一个时间窗，以给出信号的谱的时变信息。
+
+短时傅里叶变换的基本思想是把信号划分成许多小的时间间隔，用傅里叶变换分析每一个时间间隔，以便确定该时间间隔存在的频率。其表达式为：
+\begin{equation}
+	S(\omega,\tau) = \int_{R} f(t) g^{*}(t-\tau) e^{-i\omega t} \mathrm{d}t
+\end{equation}
+其中“$*$”表示复共扼，$g(t)$是有紧支集的函数，$f(t)$是进入分析的信号。$e^{-i\omega t}$起频限作用，$g(t)$起时限作用，合在一起起时频分析作用。随着时间$\tau$的变化，所确定的“时间窗”在$t$轴上移动，使$f(t)$“逐渐”进行分析。因此，$g(t)$被称为窗口函数，$S(\omega,\tau)$大致反映了$f(t)$在时刻$\tau$、频率$\omega$的“信号成分”的相对含量。
+
+%小波变换
+由此可见，短时傅里叶变换在一定程度上克服了标准傅里叶变换不具有时域局部分析能力的缺陷，但它也存在着自身不可克服的缺陷，即当窗函数$g(t)$确定后，时间宽度是一个定值，矩形窗口的形状就确定了，$\tau$，$\omega$只能改变窗口在相平面上的位置，而不能改变窗口的形状。可以说短时傅里叶变换实质上是具有单一分辨率的信号分析方法，若要改变分辨率，则必须重新选择窗函数$g(t)$。因此，对于非平稳信号，短时傅里叶变换同样不适合。
+
+所以对于在现实情况中普片存在的非平稳信号，信号分析方法希望拥有一个灵活可变的时间窗。 即对于由多种频率分量组成的非平稳信号，当信号尖锐变化时，需要有一个短的时间窗为其提供更多的频率信息当信号变化平缓时，需要一个长的时间窗用于描述信号的整体行为。这就导致了小波分析的出现。
+
+现给出小波变换的定义，对于函数$f\in l^2(R)$的小波变换为：
+\begin{equation}
+	w_{f}(a,b) = \left\langle f,\Psi_{a,b}\right\rangle = {\left| a\right| }^{-{1\over2}}  \int_R \bar{\Psi}({t-b\over a}) f(t) \mathrm{d}t
+\end{equation}
+其中，$ a,b \subset R , a>0$，式中$a$为伸缩（尺度）因子，$b$为平移（位移）因子，$\left\langle \dots\right\rangle$为内积，${\bar{\Psi}}$是$\Psi$的共轭。
+\begin{equation}
+	\Psi_{a,b}(t) = {\left| a\right| }^{-{1\over2}} \Psi({t-b\over a})
+\end{equation}
+此函数称为小波函数族，式中$a$为伸缩因子，$b$为平移因子。
+
+\subsection{连续小波变换}
+先给出平方可积的函数空间$ L^2(R) $的定义，它是要求在整个实数轴$R$上的满足$ \int_{-\infty}^{+\infty}\left|f(t)\right|^2\mathrm{d}t < \infty $的可测函数$f(t)$的全体集合，并带有相应的函数运算和内积。工程上常常说成是能量有限的全体信号的集合。
+
+小波（基本小波或母小波）就是函数空间$ L^2(R) $中满足下述条件的一个函数或者信号$\Psi(t)$：
+\begin{equation}
+\label{equ:CPsi}
+	C_{\Psi} = \int_{R^*} 
+	{{\left|\hat{\Psi}(\omega) \right|}^2 \over \left| \omega \right| }
+	 \mathrm{d}\omega < \infty
+\end{equation}
+其中，$R^{*}=R-{0}$表示非零实数全体。$\Psi(t)$也称为小波函数，或称母小波。式(\ref{equ:CPsi})称为容许性条件。
+
+对于任意的实数对$(a,b)$，其中，参数$a$必须为非零参数，连续小波的函数定义式如下：
+\begin{equation}
+\label{equ:Psiab}
+	\Psi_{a,b} (t) = {\left| a\right| }^{-{1\over2}} \Psi({t-b\over a})\qquad
+	(a,b\in R; a\neq 0)
+\end{equation}
+它是由小波母函数$\Psi(t)$经伸缩和平移后生成的依赖于参数$(a,b)$	的连续小波函数序列，简称为小波。其中：
+\begin{enumerate}[label=（\arabic*）]
+	\item 式(\ref{equ:Psiab})中$a$为伸缩因子，$b$为平移因子。如果小波母函数$\Psi(t)$的傅里叶变换$\hat{\Psi}(\omega)$在原点$\omega=0$是连续的，那么，式(\ref{equ:CPsi})说明$\hat{\Psi}(0)=0$。这说明，函数$\Psi(t)$有“波动”的特点，另外，小波函数$\Psi(t)$只在原点的附近它的波动才会明显偏离水平轴，在远离原点的地方函数值将迅速“衰减”为零，整个波动趋于平静。这是称函数$\Psi(t)$为“小波”函数的基本原因。
+	\item 对于任意的参数对$(a,b)$，显然$\int_R \Psi_{a,b}(t) \mathrm{d}t = 0$。但是，这里$\Psi_{a,b}(t)$却是在的附近存在$t=b$明显的波动，而且，有明显波动的范围的大小完全依赖于参$a$数的变化。当$a=1$时，这个范围和原来的小波函数$\Psi(t)$的范围是一致；的当$a>1$时，这个范围比原来的小波函数班的范围要大一些，小波的波形变矮变胖，而且，当$a$变得越来越大时，小波的波形变得越来越胖、越来越矮，整个函数的形状表现出来的变化越来越缓慢；当$0<a<1$时，$\Psi_{a,b}(t)$在$t=b$的附近存在明显波动的范围比原来的小波母函数的$\Psi(t)$要小，小波的波形变得尖锐而消瘦。	
+	\item 设初始伸缩系数为$a_0$，当$a>a_0$时，式(\ref{equ:Psiab})中$\Psi_{a,b}(t)$定域增大，窗口变大；当$a<a_0$时，则窗口变小，窗的高度增加，窗口面积大小不变（$b$一定时）。以上体现了小波的“变焦”能力。
+\end{enumerate}
+
+为使信号分解及重构的实现在数值上是稳定的，要求小波基函数$\Psi(t)$应该满足下面的约束条件：
+\begin{enumerate}[label=（\arabic*）]
+	\item $\int_{-\infty}^{+\infty} |\Psi(t)| \mathrm{d}t < \infty$；
+	\item $\hat{\Psi}(\omega)$在原点必须等于0，即$\hat{\Psi}(0) = \int_{-\infty}^{+\infty} \Psi(t) \mathrm{d}t = 0$；
+	\item $A\leqslant  \sum_{-\infty}^{+\infty} {|\hat{\Psi}(2^{-j}\omega)|}^2  \leqslant B$，$(0<A\leqslant B < \infty)$。
+\end{enumerate}
+
+对于任意的函数或者信号$f(t)\in L^2(R)$，用小波函数集$\{\Psi_{a,b}(t)\}$进行分解运算，其连续小波变换为：
+\begin{equation}
+\label{equ:Wfab}
+	W_f(a,b) = \langle f, \Psi_{a,b} \rangle = {|a|}^2 \int_R f(t)  \bar{\Psi}({t-b \over a}) \mathrm{d}t
+\end{equation}
+其中，$\left\langle \dots\right\rangle$为内积，${\bar{\Psi}}$是$\Psi$的共轭，$W$表示小波变换。因为小波母函数$\Psi(t)$只有在原点的附近
+才会有明显偏离水平轴的波动，在远离原点的地方函数值将迅速衰减为零，整个波动趋于平静，所以，对于任意的参数对$(a,b)$，小波函数$\Psi_{a,b}(t)$在$t=b$的附近存在明显的波动，远离$t=b$的地方将迅速地衰减到0，因而，从形式上可以看出，式(\ref{equ:Wfab})的数值$\Psi_f(a,b)$表明的本质上是原来的函数或者信号$f(t)$在$t=b$点附近按$\Psi_{a,b}(t)$进行加权的平均，体现的是以$\Psi_{a,b}(t)$为标准快慢的$f(t)$的变化情况，这样，参数$b$表示分析的时间中心或时间点，而参数$a$体现的是以$t=b$为中心的附近范围的大小，所以，一般称参数$a$为尺度参数，而参数$b$为时间中心参数。
+
+小波变换的逆变换重构公式为：
+\begin{equation}
+	f(t) = {1\over C_\Psi} \int_{-\infty}^{+\infty} \int_{-\infty}^{+\infty} W_f (a,b) \Psi_{a,b}(t){\mathrm{d}a\mathrm{d}b \over a^2}
+\end{equation}
+
+\subsection{离散小波变换}
+工程应用中所采集的信号（如位移量、压力、电压电荷量），都是有限长的离散信号。在实际信号处理中，出于数值计算的可行性和理论分析的简便性考虑，对连续小波$\Psi_{a,b}(t)$和连续小波变换$W_f(a,b)$，加以离散化处理。这一离散化都是针对连续的尺度参数$a$和连续的平移参数$b$的，而不是针对时间变量$t$的。
+
+把连续小波变换式(\ref{equ:Psiab})中尺度参数$a$和平移参数$b$的离散化分别取作$a = a_0^j$，$b=ka_0^jb_0$，$j \in Z$，扩展步长$a_0 \neq 1$是固定值，为方便起见，取定$a_0>1$与$b_0>0$。可得到
+相应的离散小波集：
+\begin{equation}
+	\Psi_{j,k}(t) = a_0^{-j/2} \Psi(a_0^{-j}t-kb_0)
+	\qquad
+	(j,k \in Z)
+\end{equation}
+离散化小波变换系数则可以表示为：
+\begin{equation}
+	c_{j,k} = \int_{-\infty}^{+\infty} f(t) \Psi_{j,k}^*(t) \mathrm{d}t
+\end{equation}
+离散小波变换重构公式为：
+\begin{equation}
+	f(t) = C \int_{j=-\infty}^{+\infty} \int_{k=-\infty}^{+\infty}
+	c_{j,k} \Psi_{j,k}(t) +R
+\end{equation}
+其中$C$为一个与信号无关的常数，$R$为误差项。从上式可以看出，要使$f(t)$能够达到不失真重构，这要求我们选取适当的$a_0$、$b_0$及$\Psi(t)$，使$\Psi_{j,k}(t)$构成表示信号空间上的完备集，从而实现小波集$\{\Psi_{j,k}(t)\}$的精确线性表示，即使$R=0$。
+
+基于上述小波变换的变形分析应用特征如下：
+\begin{enumerate}[label=（\arabic*）]
+	\item 小波变换是一种多分辨率分析，在变换中取较小的$a_0^j$，则时间的分辨率较高，这时可用于分析频率较高的建筑物的动态变形（如高层建筑的在风力作用下的摆），可以揭示建筑物动态变形特征；
+	\item 当取较大的$a_0^j$时，则频率分辨率较高，这时宜于分析频率较低的常见的建筑物变形，对分析建筑物规律并进行预报具有较好的稳健性。
+\end{enumerate}
+
+设小波为$\Psi(t)$，如果函数族$$\{ \Psi_{j,k}(t) = 2^{-j/2} \Psi (2^{-j}t-k);j,k\in Z \}$$构成空间$L^2(R)$的标准正交基，即满足下述条件的基：
+\begin{equation}
+	\langle \Psi_{j,k} , \Psi_{l,n} \rangle = \int_R \Psi_{j,k}(t) \bar{\Psi}_{l,n}(t) \mathrm{d}t = \delta (j-l) \delta (k-n)
+\end{equation}
+则称$\Psi(t)$是正交小波，$\delta (m)$其中符号的定义是：
+\begin{equation}
+	\delta (m) = 
+	\left\{
+	\begin{array}{cl}
+	1, & m=0\\
+	0, & m\neq0
+	\end{array}
+	\right.
+\end{equation}
+对任何函数或信号$f(t)$，有如下的小波级数展开：
+\begin{equation}
+	f(t) = \sum_{j=-\infty}^{+\infty} \sum_{j=-\infty}^{+\infty} A_{j,k} \Psi_{j,k} (t)
+\end{equation}
+其中的系数$A_j,k$由公式$A_j,k = \langle f, \Psi_j,k\rangle = \int_R f(t) \bar{\Psi}_{j,k}(t) \mathrm{d}t$给出，称为小波系数。
+容易看出，小波系数$A_{j,k}$正好是信号$f(t)$的连续小波变换$W_f(a,b)$在尺度系数$a$的二进离散点$a_j=2^j$和时间中心参数$b$的二进整倍数的离散点$b_k = 2^jk$二所构成的点$(2^j,2^jk)$上的取值，因此，小波系数$A_{j,k}$实际上是信号$f(t)$的离散小波变换。也就是说，在对小波添加一定的限制之一下，连续小波变换和离散小波变换在形式上简单明了地统一起来了，而且，连续小波变换和离散小波变换都适合空间 $L^2(R)$ 上的全体信号。
+
+\section{自回归滑动平均（ARMA）预测模型}
+ARMA模型是由美国统计学家 George E. P. Box 和英国统计学家 Gwilym Jenkins 在二十世纪七十年代提出的时序分析模型\citeup{box2011time}，即自回归滑动平均模型（Auto Regerssive Moving Average Model）。
+
+用ARMA模型模拟随机性时序在实际应用中有许多方便之处。例如它是线性的，只要给出少量参数后，模型就完全确定，便于处理；另外，ARMA模型具有有理谱密度，它能逼近任何连续谱密度；最后，ARMA模型便于分析数据的结构和内在性质，也便于在线性最小方差意义下进行最佳预报和控制。
+
+\subsection{ARMA模型的定义}
+ARMA模型是AR模型和MA模型的组合。
+
+AR模型的预测方式是通过历史的观测值和现在的干扰值的线性组合对数据的未来走势进行预测，自回归模型的数学公式为：
+\begin{equation}
+\label{equ:xtAR}
+	x_t = \phi_{1}x_{t-1} + \phi_{2}x_{t-2} + \dots +\phi_{p}x_{t-p} +\varepsilon_t
+\end{equation}
+其中，$p$为自回归模型的阶数，$\phi_{i},(i=1,2,\dots,p)$为模型的待定系数，$\varepsilon_t$为误差，$x_t$为平稳时间序列。
+
+MA模型的预测方式是通过历史的干扰值和现在的干扰值的线性组合对数据的未来走势进行预测。滑动平均模型的数学公式为：
+\begin{equation}
+	x_t = \varepsilon_t - \theta_{1}\varepsilon_{t-1} - \theta_{2}\varepsilon_{t-2} - \dots - \theta_{q}\varepsilon_{t-q} 
+\end{equation}
+其中，$q$为自回归模型的阶数，$\theta_{i},(i=1,2,\dots,p)$为模型的待定系数，$\varepsilon_t$为误差，$x_t$为一个平稳时间序列。
+
+ARMA($p,q$)的定义式为：
+\begin{equation}
+	 x_t = \phi_{1}x_{t-1} + \phi_{2}x_{t-2} + \dots +\phi_{p}x_{t-p} +\varepsilon_t - \theta_{1}\varepsilon_{t-1} - \theta_{2}\varepsilon_{t-2} - \dots - \theta_{q}\varepsilon_{t-q} 
+\end{equation}
+在该模型中引入延迟算子，ARMA($p,q$)模型简记为：
+\begin{equation}
+	\Phi(B)x_t = \Theta(B)\varepsilon_t
+\end{equation}
+其中，$ \Phi(B) = 1 - \phi_{1}B^1 - \dots - \phi_{p}B^p$为$p$阶自回归系数多项式；$ \Theta(B) = 1 - \theta_{1}B^1 - \dots - \theta_{q}B^q$为$q$阶移动平均系数多项式。
+
+当$p$ 和$q$分别等于零时，ARMA模型分别退化成AR模型和MA模型。
+
+\subsection{ARMA序列的自相关、偏相关函数}
+在实际中，我们经常研究一对变量之间的夫系。在收集的数据处理中，用相关概念来描述两个变量之间的相依关系。它有两种形式，一种是线性相关，指两个变量之间可用线性方程来描述；另一种是非线性相关，指两变量之间需用非线性方程来描述。不过，这些都是与时间无关的随机变量之间的关联性。在时间序列分析中，需要了解与时间有关的信息在不同时刻的取值有无内在的关联性，这就需要引入相关函数的概念。
+
+\subsubsection{自相关函数}
+在$t$，$t+a$时刻的样本记录$X(t)$，$X(t+a)$的自相关性可以通过在观察时间$T$上对这两个值的乘积作平均得到。$T$趋于无穷时，平均乘积的极限将接近一个正确的自相关函数。用公式表示，就是：$R_x(a) = \lim\limits_{T \rightarrow \infty} \int_{0}^{T}x(t)x(t+a)\mathrm{d}t$。零均值化后的样本自协方差函数和样本自相关函数可作为自协方差函数和自相关函数的估计。样本自协方差函数：
+\begin{equation}
+	\hat{r_k} = {1 \over N} \sum_{t=1}^{n-k}x_t x_{t+k}
+	\qquad
+	k = 0,1,2,\dots,N-1
+\end{equation}
+样本自相关函数：
+\begin{equation}
+	\hat{p_k} = {\hat{r_k} \over \hat{r_0}}
+	\qquad
+	kk = 0,1,2,\dots,N-1
+\end{equation}
+\begin{enumerate}[label=（\arabic*）]
+	\item 对于AR过程，用$x_{t-k}$乘以式(\ref{equ:xtAR})的两端，并取数学期望，可得差分方程：
+	\begin{equation}
+		r_k = \phi_1 r_{k-1}+\phi_2 r_{k-2}+\dots+\phi_p r_{k-p}
+	\end{equation}
+	
+	当$k>0$时，$x_{t-k}$ 和 $a_t$不相关，所以$E[x_{t-k} a_t] = 0$。可得：
+	\begin{equation}
+		p_k = \phi_1 p_{k-1}+\phi_2 p_{k-2}+\dots+\phi_p p_{k-p}
+	\end{equation}
+	
+	当$k=0$时，因为$E[x_t a_t] = E[{a_t}^2] = {\sigma_a}^2$。可得：
+	\begin{equation}
+		p_k = C_1 {w_1}^{-k}+C_2 {w_2}^{-k}+\dots+C_p{w_p}^{-k},k>-p
+	\end{equation}
+	其中，$w_1,w_2,\dots,w_p$是$\Psi(w)=0$的根，系数$C_1,C_2,\dots,C_p$由$P$个初始值来定。
+	
+	一般来说，平稳时间序列的自相关函数是由指数衰减和衰减正弦波组成。即自相关函数的尾部不可能在延迟某步之后等于零，而只是按负指数律衰减。因此，AR过程的自相关函数序列具有拖尾的特性。
+		
+	\item 对于MA过程，其自相关函数为：
+	\begin{equation}
+		p_k = \left\lbrace 
+		\begin{array}{cl}
+		{-\theta_k+\theta_1\theta_{k+1}+\dots+\theta_{q-k}\theta_q\over {1+\theta_1^2+\theta_2^2+\dots+\theta_q^2}} &  k=1,2,\dots,q \\
+		0 & k>q
+		\end{array}
+		 \right. 
+	\end{equation}
+	可见，MA序列的自相关函数，从$k>q$以后全部为零。我们称这一性质为“截尾”，反之，可以证明，若一平稳时间序列的自相关函数为截尾，那么它必是MA($q$)序列。
+\end{enumerate}
+
+\subsubsection{偏相关函数}
+MA($q$)过程的自协方差或自相关函数在$q$步滞后就截止为零，截尾性是MA序列特有的标志，据此可以推测出MA($q$)模型的阶数。而AR($p$)过程的自相关函数没有截止点，拖尾性是AR和ARMA序列的共有特性。为了构造出某种函数使得 AR($p$) 过程在滞后$P$步之后能够截止，引入偏相关函数的概念。
+
+设$\{x_t\}$为平稳、零均值序列，考虑$x_{t-1},x_{t-2},\dots,x_{t-k}$对$x_t$的线性最小方差估计，即选择系数$\Phi_{k1},\Phi_{k2},\dots,\Phi_{kk}$，使得$$\delta = E[x_t - \sum_{j=1}^{k}\phi k_j x_t -j]^2 = \gamma_0-2 \sum_{i,j=1}^{k} \phi_{kj} \phi_{ki} \gamma_{j-i} $$ 达到极小。为达此目的,对$\delta$的右端分别求偏导数${\partial \delta \over \partial \Phi_{kj}} , j=1,2,\dots,k$，令其为零，便得到$\Phi_{kj}$应该满足的线性方程组：
+\begin{equation}
+	\left( 
+			 \begin{matrix}
+				 1 & p_1 & \cdots & p_{k-1} \cr
+				 p_1 & 1 & \cdots & p_{k-2} \cr
+				 \vdots  & \vdots  & \ddots & \vdots  \cr
+				 p_{k-1} & p_{k-2} & \cdots & 1 \cr
+			\end{matrix}
+			\right) 
+	\left(  \begin{matrix}
+	\phi_{k1} \cr
+	\phi_{k2} \cr
+	\vdots \cr
+	\phi_{kk} \cr
+	\end{matrix} \right) 
+					=
+	\left( \begin{matrix}
+	p_1 \cr
+	p_2 \cr
+	\vdots \cr
+	p_k \cr
+	\end{matrix}  \right) 
+\end{equation}
+对$k=1,2,\dots$，依次利用Cramer法则，可得：
+\begin{equation}
+	\phi_{kk} = {
+		\left|  \begin{matrix}
+				1 & p_1 & p_2 & \cdots & p_{k-2} & p_1 \cr
+				p_1 & 1 & p_1 & \cdots & p_{k-3} & p_2 \cr
+				p_2 & p_1 & 1 & \cdots & p_{k-4} & p_3 \cr
+				\vdots & \vdots & \vdots & \ddots & \vdots & \vdots \cr
+				p_{k-1} & p_{k-2} & p_{k-3} & \cdots & p_1 & p_k \cr
+		\end{matrix} \right| 
+		\over 
+		\left|  \begin{matrix}
+				1 & p_1 & p_2 & \cdots & p_{k-1} \cr
+				p_1 & 1 & p_1 & \cdots & p_{k-2} \cr
+				\vdots & \vdots & \vdots & \ddots & \vdots \cr
+				p_{k-1} & p_{k-2} & p_{k-3} & \cdots & 1 \cr
+		\end{matrix} \right| 
+		}
+\end{equation}
+可以看出，当$k>p$时，AR($p$)过程的行列式$\phi_{kk}$将变为零，因为其中的任一行可以写成其它行的线性组合。我们称$\phi_{kk},(k=1,2,\dots)$为$x_t$的偏相关函数。显然，偏相关函数$\phi_{kk}$是利用自相关函数$p_k$构造出来的。对于$p$阶自回归过程AR($p$)，出现了偏相关函数序列的截尾特性：$\phi_{kk} \neq 0 , k \leqslant p$；$\phi_{kk} =0 , k > p$。
+
+这就是说AR($p$)模型的偏相关函数是$p$步截尾的，并且也只有AR过程的偏相关函数具有截尾的特性。
+
+故此，我们可以依据样本的自相关、偏相关函数的截尾性和拖尾性，辨别模型类别，识别模型的阶数。
+
+\subsection{ARMA模型的参数估计}
+模型参数估计是基于ARMA 模型的参数识别一个关键，它既是识别的主要目标，又是进行模型检验的基础。选择适当的时间序列模型建模，通过考察样本自相关系数与偏自相关系数的性质进行初步识别：
+\begin{itemize}
+	\item 若平稳时间序列的偏相关函数是截尾的，而自相关函数是拖尾的，则可断定此序列适合AR模型。
+	\item 若平稳时间序列的偏相关函数是拖尾的，而自相关函数是截尾的，则可断定此序列适合MA模型。
+	\item 若平稳时间序列的偏相关函数和自相关函数均是拖尾的，则 ARMA 模型适合此序列。
+\end{itemize}
+根据上述原则，总结的识别方法可见表\ref{tab:ARMAshibie}。
+\begin{table}[htbp] 
+	\centering
+	\caption{\label{tab:ARMAshibie}ARMA模型识别方法} 
+	\begin{tabular}{lll} 
+		\toprule 
+		自相关系数 & 偏相关系数 & 模型识别\\ 
+		\midrule
+		拖尾 & $p$阶截尾 & AR($p$)模型 \\
+		$q$阶截尾 & 拖尾 & MA($q$)模型\\ 
+		拖尾 & 拖尾 & ARMA($p,q$)模型\\
+		\bottomrule 
+	\end{tabular} 
+\end{table}
+
+按照上述方法选取的模型和参数，往往并不能确认是否完全符合线性关系。所以一般也难以仅仅按照机理方法建立模型。因而必须要利用一种可行的估计模型的方法，用有限数量的参数最逼真的描述某一时间序列。故通过上述方法选取的参数，对序列$\{ x_t\}$由低阶到高阶逐一拟合模型ARMA($p,q$)，并经有关统计量的检验选优。
+
+有关统计量方法主要有FPE 准则（最终预测误差准则）方法、AIC 准则方法、F 检验临界值定阶准则方法等。但是，由于实际问题多种多样、随机过程千变万化，从而使统计分析计算存在误差。在本论文中，使用的是AIC 准则方法。下面就这一方法准则介绍。
+
+AIC（Akaike’ s Information Criterion）准则方法是 Akaike 教授把极大似然函数用于时序模型假设检验而推导出相应的 AIC 准则：
+$$	\mathrm{AIC} = -2\ln(\text{模型的极大似然度} )+2(\text{模型的独立参数个数}) $$
+对于ARMA($p,q$)模型而言，其极大似然度和残差方差的对数有关，因此，其 AIC 函数为：
+\begin{equation}
+	\mathrm{AIC} = N\ln({\hat{\sigma_\varepsilon}}^2)+(p+q+l)
+\end{equation}
+在不同模型参数做比较时，希望AIC指标越小越好。
+
+\section{支撑向量机回归（SVR）预测模型}
+
+
+\section{本章小结}
