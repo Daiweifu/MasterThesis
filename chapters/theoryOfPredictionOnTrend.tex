@@ -5,6 +5,43 @@
 
 在此，首先对卫星在轨异变数据进行简要的分析介绍。
 \section{卫星在轨异变数据分析} 
+卫星结构复杂，信号种类繁多，同时收到空间环境中多种因素的干扰，卫星在轨异变数据是一个复杂的动态信号系统。因此先要对卫星信号的特征了解把握。下面就从真实的卫星信号入手，对在轨异变数据的特征进行分析。
+
+\subsection{低信噪比}
+卫星在轨异变数据的波动频率和幅度都在不断变化中，即使不存在 国外势力对我国卫星恶意干扰的情况，也会因为各种因素的影响呈现小幅的高频的波动，一般将这种高频小幅波动视为噪声。
+
+由于这些干扰因素众多，其中包括空间环境中的各种粒子对卫星工作器件的影响，还有遥测数据在发送、传播、接收过程中的干扰。这些因素对最后遥测信号的噪声影响较大，造成信噪比较低。
+
+但是在对时间序列进行预测时，要用数学方法将噪声尽可能去掉。而由于异变信号时间序列的频率和幅度在不断变化中，只有选用自适应特点的方法对噪声进行处理才能有效。
+
+\subsection{非平稳性}
+一个平稳序列的数宇特征一般表现为：均值、方差等不随时间的变化而变化，时间序列在各个时间点上的随机性服从一定的概率分布，在图形上往往表现为围绕其均值不断波动。而非平稳时间序列则表现出在不同的时间段具有不同的均值。检验序列平稳性的标准方法是单位根检验，主要有Augmented Dickey-Fuller Test（ADF）， Dickey-Fuller Test with GLS（DFGLS），Philips-Perron，KPSS，ERS 及NP 等六种检验方法。本论文采用ADF单位根检验方法进行检验。
+
+下面，本论文以某卫星在2011年3月份某一天内的负分流调节器分流电流 （ IN4 ） 遥测信号为样例数据，其时域图如图(\ref{pingWenXing_ShiYuTu})所示。
+
+\pic[htbp]{卫星在2011年3月份某一天内的IN4信号时域图}{}{pingWenXing_ShiYuTu} 
+
+首先，从图(\ref{pingWenXing_ShiYuTu})的时域数据中看来，改时间序列具有非平稳性的特点。
+
+接下来，对该时间序列进行ADF检验，出结果见表\ref{tab:pingWenXing_ADF}。
+\begin{table}[htbp] 
+	\centering
+	\caption{\label{tab:pingWenXing_ADF}样本序列的ADF检验值} 
+	\begin{tabular}{ccc} 
+		\toprule 
+		{} & T统计量值 & P值\\ 
+		\midrule
+		ADF & -2.087269 &  0.7163 \\
+		1\%显著性水平检验临界值 & -3.430904 & {}\\ 
+		5\%显著性水平检验临界值& -2.861669 & {}\\
+		10\%显著性水平检验临界值& -2.566880 & {}\\
+		\bottomrule 
+	\end{tabular} 
+\end{table}
+
+从表\ref{tab:pingWenXing_ADF}中可见，不能拒绝存在一个单位根的原假设，ADF统计值大于1\%level 、 5\%level和10\%level的临界值，序列是非平稳的。
+
+从整体的数据看来，卫星在轨异变数据普片具有非平稳性。
 
 \section{小波分析理论}
 在1984年，Morlet和Grossman提出小波（wavelet）一词，他们用的是法语词 ondelette ，意思就是“小波”。后来在英语里，“onde”被改为“wave”而成了 wavelet \citeup{grossmann1984decomposition}。小波分析算法作为一种数学理论和方法在科学界引起越来越多的重视，并被运用到各个技术领域中。
@@ -195,7 +232,7 @@ ARMA($p,q$)的定义式为：
 
 当$p$ 和$q$分别等于零时，ARMA模型分别退化成AR模型和MA模型。
 
-\subsection{ARMA序列的自相关、偏相关函数}
+\subsection{ARMA序列的相关函数}
 在实际中，我们经常研究一对变量之间的夫系。在收集的数据处理中，用相关概念来描述两个变量之间的相依关系。它有两种形式，一种是线性相关，指两个变量之间可用线性方程来描述；另一种是非线性相关，指两变量之间需用非线性方程来描述。不过，这些都是与时间无关的随机变量之间的关联性。在时间序列分析中，需要了解与时间有关的信息在不同时刻的取值有无内在的关联性，这就需要引入相关函数的概念。
 
 \subsubsection{自相关函数}
@@ -329,6 +366,176 @@ $$	\mathrm{AIC} = -2\ln(\text{模型的极大似然度} )+2(\text{模型的独�
 在不同模型参数做比较时，希望AIC指标越小越好。
 
 \section{支撑向量机回归（SVR）预测模型}
+支持向量机（SVM）是一种基于统计学习理论的新兴的数据挖掘和机器学习方法，由Cortes Corinna和Vapnik Vladimir等发明，在1995年引入机器学习领域后\citeup{cortes1995support}，得到了广泛关注和深入发展，现在已成为数据挖掘领域的标准工具。SVM 是建立在统计学习理论的VC 维理论和结构风险最小原理基础上的，它通过一个非线性映射$\phi$将数据$x_i$映射到一个高维特征空间，并在空间进行线性回归，从而将低维特征空间的非线性回归问题转化为高维特征空间线性回归问题解决。
 
+\subsection{SVR的定义}
+支持向量回归（SVR）是支持向量机用于回归中的情况。
+
+先考虑线性情况，设给定训练样本集：
+$$ S = \{ (x_1,y_1),(x_2,y_2),\dots, (x_l,y_l)\} \subset R^n \times R $$
+样本集$S$是$\varepsilon$线性近似的，如果存在一个超平面$f(x) = \langle w,x\rangle+b$，其中$w\in R^n, b\in R$，下面的式子成立\citeup{ancona1999properties}：
+\begin{equation}
+\label{equ:yi_fxi}
+	\left| y_i -f(x_i) \right| \leqslant \varepsilon, i=1,2,\dots,l
+\end{equation}
+
+图\ref{SVR_XianXingJinSi}显示了一个典型的线性近似。
+\pic[htbp]{线性近似}{}{SVR_XianXingJinSi}
+
+引入$d_i$表示点$(x_i,y_i)\in S$到超平面$f(x)$的距离：
+\begin{equation}
+	d_i = {\left| \langle w,x_i \rangle +b -y_i \right| 
+		 \over 
+		\sqrt{ 1+ \left\| w \right\| ^2 }}
+\end{equation}
+因为$S$集是$\varepsilon$线性近似的，所以有
+$$ \left| \langle w,x_i \rangle +b -y_i \right| \leqslant \varepsilon; i = 1,2,\dots,l $$
+可得：
+$$
+{ \left| \langle w,x_i \rangle +b -y_i \right| \over \sqrt{ 1+ \left\| w \right\| ^2 } }   \leqslant  
+{ \varepsilon \over \sqrt{ 1+ \left\| w \right\| ^2 } }
+,1 = 1,2,\dots,l
+$$
+于是有：
+\begin{equation}
+\label{equ:diXYDY}
+	d_i \leqslant \varepsilon
+	\over 
+	\sqrt{ 1+ \left\| w \right\| ^2 } ,i=1,2,\dots,l
+\end{equation}
+式\ref{equ:diXYDY}表明，${\varepsilon \over \sqrt{ 1+ \left\| w \right\| ^2 }}$是$S$中的点到超平面的距离的上界。
+
+然而$\varepsilon$线性近似集$S$的最优近似超平面是通过最大化$S$中的点到超平面距离的上界而得到的超平面\citeup{ancona1999properties}。
+
+图\ref{SVR_ChaoPingMian} 显示了最优近似超平面。\pic[htbp]{最优近似超平面}{}{SVR_ChaoPingMian}
+由这个定义能够得出最优近似超平面是通过最大化 ${\varepsilon \over \sqrt{ 1+ \left\| w \right\| ^2 }}$（即最小化$\sqrt{ 1+ \left\| w \right\| ^2 }$）得到的。因此，只要最小化$\left\| w \right\| ^2$就可以得到最优近似超平面。于是线性回归问题就化为求下面的优化问题：
+\begin{equation}
+	\min {1\over 2} \left\| w \right\| ^2
+\end{equation}
+约束为
+\begin{equation}
+	\left| \langle w,x_i \rangle +b -y_i \right| \leqslant \varepsilon; i = 1,2,\dots,l
+\end{equation}
+
+\subsection{SVR的优化}
+考虑到可能存在一定误差,因此引入两个松弛变量：
+$$ \xi_i,\xi_i^* \geqslant 0, i=1,2,\dots,l $$
+损失函数采用是$\varepsilon$不敏感函数，它的定义为：
+$$
+	\left| \xi_\varepsilon \right|  = \left\lbrace 
+		\begin{array}{cl}
+		0 &  \text{如果}\left| \xi \right| \leqslant \varepsilon  \\
+		\left| \xi \right| - \varepsilon & \text{其他}
+		\end{array}
+	 \right. 
+$$
+此时的优化方程为：
+\begin{equation}
+\label{equ:min12}
+	\min {1\over 2} \left\| w \right\| ^2 +C\sum_{i=1}^{l} (\xi_i+\xi_i^*)
+\end{equation}
+约束为：
+\begin{equation}
+	 \left\lbrace 
+		\begin{array}{ll}
+		f(x_i)-y_i\leqslant \xi_i^*+\varepsilon &  i=1,2,\dots,l  \\
+		y_i-f(x_i)\leqslant \xi_i+\varepsilon &  i=1,2,\dots,l\\
+		\xi_i,\xi_i^*\geqslant 0 & i=1,2,\dots,l
+		\end{array}
+	\right. 
+\end{equation}
+优化式(\ref{equ:min12})中第一项使函数更为平坦，从而提高泛化能力，第二项则为减小误差，常数$C$对两者做出折中。$\varepsilon$为一正常数，$f(x_i)$与$y_i$的差别小于$\varepsilon$时不计入误差，大于$\varepsilon$时误差计为$\left| f(x_i)-y_i \right| -\varepsilon$。
+
+引入拉格朗日函数：
+$$
+\begin{array}{cl}
+L(w,b,\xi,\alpha,\alpha^*,\gamma) = & {1\over 2} \left\| w \right\| ^2 + C\sum_{i=1}^{l} (\xi_i+\xi_i^*) \\
+{} & - \sum_{i=1}^{l}\alpha_i[\xi_i+\varepsilon-y_i+\langle w,x_i\rangle+b]\\
+{} &  -\sum_{i=1}^{l}\alpha_i^*[\xi_i+\varepsilon+y_i-\langle w,x_i\rangle-b]\\
+{} & -\sum_{i=1}^{l}\gamma_i(\xi_i+\xi_i^*)
+\end{array}
+$$
+其中$\alpha,\alpha^*,\gamma_i>0,i=1,2,\dots,l$
+
+函数$L$的极值应满足条件：
+$$
+{\partial \over \partial w }L = 0,
+{\partial \over \partial b }L = 0,
+{\partial \over \partial \xi _i^{(*)}}L = 0
+$$
+于是得到下面的式子：
+\begin{equation}
+\label{equ:wDENGYU}
+	\left\lbrace 
+		\begin{array}{ll}
+		w = \sum_{i=1}^{l}(\alpha_i -\alpha_i^*) x_i &  {}  \\
+		\sum_{i=1}^{l}(\alpha_i -\alpha_i^*) = 0 &  {}\\
+		C-\alpha_i-\gamma_i = 0 &  i=1,2,\dots,l\\
+		C-\alpha_i^*-\gamma_i^* = 0 & i=1,2,\dots,l
+		\end{array}
+	\right. 
+\end{equation}
+将式(\ref{equ:wDENGYU})代入式(\ref{equ:yi_fxi})中，得到优化问题的对偶形式为：
+\begin{equation}
+	\max -{1\over 2} \sum_{i,j=1}^{l}(\alpha_i-\alpha_i^*)(\alpha_j-\alpha_j^*)
+	\langle x_i,x_j \rangle	+\sum_{i=1}^{l}(\alpha_i-\alpha_i^*)y_i
+	-\sum_{i=1}^{l}(\alpha_i+\alpha_i^*)\varepsilon
+\end{equation}
+约束为：
+\begin{equation}
+\label{equ:sumIL}
+	\left\lbrace 
+		\begin{array}{ll}
+		 sum_{i=1}^{l} (\alpha_i - \alpha_i^*) = 0&  {}  \\
+		0\leqslant \alpha_i,\alpha_i^* \leqslant C & i=1,2,\dots,l
+		\end{array}
+	\right. 
+\end{equation}
+
+对于非线性回归，同分类情况一样，首先使用一个非线性映射$\phi$把数据映射到一个高维特征空间，然后在高维特征空间进行线性回归。由于在上面的优化过程中只考虑到高维特征空间中的内积运算，因此用核函数$K(x,y)$代替$\langle \phi(x),\phi(y)  \rangle$ 就可以实现非线性回归。于是，非线性回归的优化方程为最大化下面的函数：
+\begin{equation}
+	\begin{array}{cl}
+	W(\alpha_i,\alpha_i^*) = & -{1\over 2} \sum_{i,j=1}^{l}(\alpha_i-\alpha_i^*)(\alpha_j-\alpha_j^*)K(x_i,x_j)\\
+	{} & +\sum_{i=1}^{l}(\alpha_i-\alpha_i^*)y_i - \sum_{i=1}^{l}(\alpha_i+\alpha_i^*)\varepsilon
+	\end{array}
+\end{equation}
+约束条件为式(\ref{equ:sumIL})。解出$\alpha$的值后，可得$f(x0)$的表达式为：
+\begin{equation}
+	f(x) = \sum_{i=1}^{l}(\alpha_i-\alpha_i^*)K(x_i,x) + b
+\end{equation}
+
+通常情况下，大部分$ \alpha_i$ 和 $ \alpha_i^*$的值将为零，不为零的$ \alpha_i$或$ \alpha_i^*$ 所对应的样本被称为支持向量。
+
+根据KKT条件，在鞍点有：
+$$
+\left\lbrace 
+	\begin{array}{ll}
+	\alpha_i[\xi_i+\varepsilon -y_i +f(x_i)] = 0 & i=1,2,\dots,l \\
+	\alpha_i^*[\xi_i+\varepsilon + y_i -f(x_i)] = 0 & i=1,2,\dots,l \\
+	(C-\alpha_i)\xi_i = 0& i=1,2,\dots,l \\
+	(C-\alpha_i^*)\xi_i^* = 0 & i=1,2,\dots,l 
+	\end{array}
+\right. 
+$$
+于是可得$b$的计算式如下：
+\begin{equation}
+	b = \left\lbrace 
+		\begin{array}{ll}
+		y_j-\varepsilon-\sum_{i=1}^{l}(\alpha_i-\alpha_i^*)K(x_j,x_i)& \text{当}\alpha_j \in (0,C)\\
+		y_j+\varepsilon-\sum_{i=1}^{l}(\alpha_i-\alpha_i^*)K(x_j,x_i)& \text{当}\alpha_j^* \in (0,C)
+		\end{array}
+	\right. 
+\end{equation}
+用任意一个支持向量就可以计算出$b$的值，也可以采用取平均值的方法。
+
+\subsection{SVR参数的选取}
+在的实现过程中，参数的选取直接关系最终回归结果的准确率。目前关于SVR参数的选取问题，一般采用的方法有经验选择法、实验比较法、梯度下降法、交叉验证法、贝叶斯算法，分布估算法等等。在综合考虑了运算速度和可信度等因素之后，本论文决定采用交叉验证法来进行参数的选择。
+
+交叉验证思想（Cross  validation，简称CV），是用来验证分类器性能的一种统计分析方法，其基本思想是把在某种意义下将原始数据进行分组，一部分作为训练集，另一部分作为验证集，先用训练集对分类器进行训练，再用验证集来测试训练得到的模型，以得到的回归准确率作为评价分类器的性能指标。
 
 \section{本章小结}
+本章主要对基于趋势的预测算法的理论进行描述。
+
+首先，对卫星在轨异变信号的特征进行分析，并根据这些特征，给出基于小波分析、ARMA 预测模型、AVR 预测模型的算法融合的预测方法。
+
+接下来，逐一描述了小波分析、ARMA 预测模型、AVR 预测模型的基本算法理论，并给出仿真实验需要用到的参数选择方法等必要理论叙述。
