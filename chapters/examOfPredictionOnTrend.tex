@@ -1,0 +1,210 @@
+% !Mode:: "TeX:UTF-8"
+
+\chapter{基于趋势预测算法的实验仿真}
+在第\ref{chap:topot}章中讲解了基于趋势预测算法的理论，而在本章中将根据第\ref{chap:topot}章中的理论，进行仿真实验的描述。
+
+\section{实验方案及预测结果评判指标}
+\subsection{实验方案}
+在此先给出基于趋势预测算法的实验方案图，如图\ref{plan_pot}所示。
+\pic[htbp]{基于趋势预测算法的实验方案}{}{plan_pot} 
+
+基于趋势预测算法的实验方案，是采取算法融合的方式来对卫星在轨异变数据进行预测，主要用到小波分析算法，ARMA预测模型，SVR预测模型等方法。
+根据实验方案图，下面将给出具体的算法步骤：
+\begin{enumerate}[label=（\arabic*）]
+	\item 根据实测卫星信号$Y:\{ y_1, y_2,\dots \}$的时频特征，选取一个小波对信号序列进行多尺度分解，对信号的趋势进行分析，确定分解尺度$n$和最大分解层数$J$。
+	\item 信号经小波分解方法处理，得到高频序列$d_{n,i}$和低频序列$c_{J,i}$；
+	\item 分别对高频序列$d_{n,i}$和低频序列$c_{J,i}$进行数据平稳性检验。一般情况下，高频序列是满足平稳性的，而低频序列则要视情况而定。
+	\item 如果低频序列$c_{J,i}$和$d_{n,i}$满足平稳性验证，则对其经行ARMA预测，如果不满足，则对其进行SVR预测。
+	\item 对得到的高频预测值$d_{n,i+1}^\prime$和低频预测值$c_{J,i+1}^\prime$进行小波重构，即进行加权计算，得到最终结果$y_{i+1}^\prime$：
+	$$ y_{i+1}^\prime = d_{1,i+1}^\prime + d_{2,i+1}^\prime + \dots +d_{J,i+1}^\prime + c_{J,i+1}^\prime$$
+	同理，根据$t_i$时刻之前的数据预测第$k$步状态值，则有：
+	\begin{equation}
+	\label{equ:yipk}
+		y_{i+k}^\prime = d_{1,i+k}^\prime + d_{2,i+k}^\prime + \dots +d_{J,i+k}^\prime + c_{J,i+k}^\prime
+	\end{equation}
+\end{enumerate}
+
+\subsection{预测结果评判指标}
+一般时间序列预测结果的评判指标有以下三种方式：
+\begin{enumerate}[label=（\arabic*）]
+	\item 均方根误差：
+	\begin{equation}
+		\mathrm{RMSE} = \sqrt{{1\over n} \sum_{t=1}^{n}{(y_t-\hat{y_t})}^2}
+	\end{equation}
+	\item 平均绝对百分比误差：
+	\begin{equation}
+		\mathrm{MAPE} = {1\over n} \sum_{t=1}^{n}{\left| y_t-\hat{y_t} \right|  \over \left| y_t \right|  }
+	\end{equation}
+	\item 平均绝对误差：
+	\begin{equation}
+		\mathrm{MAE} = {1\over n} \sum_{t=1}^{n}{\left| y_t-\hat{y_t} \right|  }
+	\end{equation}
+\end{enumerate}
+
+\section{实验流程}
+\subsection{实验数据的选取}
+本实验选取的数据是某卫星在2011年5月初某一天多内，转向轮子合成的Y轴角动量（Hy）的遥测数据。其时域图如图\ref{POT_shiyutu}所示。
+\pic[htbp]{实验数据Hy信号时域图}{}{POT_shiyutu}
+
+从图中可以看出，数据变化趋势不固定，并且数据毛刺较多。
+
+本实验的目标是对这段数据进行在轨实时短期预测。
+
+\subsection{小波分解}
+接下来对数据进行小波分解，综合多种因素，本实验选取db5小波，阶数选择为7。下图是得到的小波分解结果如图\ref{POT_xiaobo}。
+\pic[htbp]{Hy信号的小波分解图}{}{POT_xiaobo}
+
+从图中可以看出，随着分解层数的提高，小波分解的低频分量越平滑，高频分量展现了一些规律性。
+
+\subsection{对低频分量的平稳性检验及预测}
+在本实验中需要对低频分量进行平稳性检验，如果信号满足平稳性，则可以使用ARMA预测算法，进行预测；如果信号不满足平稳性，则需要使用SVR预测算法，进行预测。在此采用Augmented Dickey-Fuller test（ADF）单位根验证方法，利用Eviews软件来实现。
+
+首先给出卫星遥测信号Hy的小波分解低频分量HyA7的时域图如图\ref{POT_A7_shiyu}。
+\pic[htbp]{Hy信号小波分解低频分量HyA7时域图}{}{POT_A7_shiyu}
+从时域图可以看出，低频分量HyA7是非平稳的。
+
+本实验对序列进行ADF检验。序列不存在明显的趋势，所以选择对常数项，不带趋势的模型进行检验，检验结果如表\ref{tab:HyA7_ADF} 所示。
+\begin{table}[htbp] 
+	\centering
+	\caption{\label{tab:HyA7_ADF}HyA7的ADF检验结果表} 
+	\begin{tabular}{ccc} 
+		\toprule 
+		{} & T统计量值 & P值\\ 
+		\midrule
+		ADF & -1.049255 &  0.7367 \\
+		1\%显著性水平检验临界值 & -3.430904 & {}\\ 
+		5\%显著性水平检验临界值& -2.861669 & {}\\
+		10\%显著性水平检验临界值& -2.566880 & {}\\
+		\bottomrule 
+	\end{tabular} 
+\end{table}
+结果表明不能拒绝存在一个单位根的原假设，ADF统计值大于1\%level、5\%level和10\%level的临界值，序列是非平稳的。因此，本试验将采用非稳系统分析的SVR模型对低频分量进行建模预测。
+
+以下是对低频分量HyA7进行SVR建模预测过程。全数据段为9000个数据点，取前500个数据点对未来的10个数据点进行预测，并且采用的是在轨的动态预测方法。在轨SVR预测结果图如图\ref{POT_A7_yuce} 所示。
+\pic[htbp]{Hy信号小波分解低频分量HyA7时域图}{}{POT_A7_yuce}
+
+在图中，蓝色的实线是原始的时域数据曲线，绿色的虚线是预测结果。可以从图中直观的看到预测结果比较理想。
+
+\subsection{对高频分量的平稳性检验及预测}
+在此，本实验取卫星遥测数据Hy的小波分解后的其中一个高频分量HyD1经行演示。HyD1的时域波形如图\ref{POT_D1_shiyu}所示。
+\pic[htbp]{Hy信号小波分解低频分量HyA7时域图}{}{POT_D1_shiyu}
+
+从图中可以看到，信号是满足平稳性的。并且卫星遥测信号的小波分解高频分量一般都具有平稳性的，但是在此，我们同样要使用Eviews进行平稳性检验，并来确定ARMA的模型参数。
+
+试验中对高频分量HyD1进行ADF检验，检验结果如下表\ref{tab:HyD1_ADF}所示，ADF统计值远小于三个比较值，序列是平稳的，可以对其进行ARMA建模预测。
+\begin{table}[htbp] 
+	\centering
+	\caption{\label{tab:HyD1_ADF}HyA7的ADF检验结果表} 
+	\begin{tabular}{ccc} 
+		\toprule 
+		{} & T统计量值 & P值\\ 
+		\midrule
+		ADF & -50.83602 &  0.0001 \\
+		1\%显著性水平检验临界值 & -3.430904 & {}\\ 
+		5\%显著性水平检验临界值& -2.861669 & {}\\
+		10\%显著性水平检验临界值& -2.566880 & {}\\
+		\bottomrule 
+	\end{tabular} 
+\end{table}
+
+接下来确定HyD1的ARMA模型参数。先求得HyD1高频分量的相关图，如图 \ref{hyd1xiangguan}所示。
+\pic[htbp]{HyD1相关结果图}{}{hyd1xiangguan}
+
+根据序列相关图中的自相关系数和偏相关系数估计模型参数，序列的自相关系数在3阶后截尾，ARMA模型参数$p$可以考虑选择2，偏自相关系数在5阶后拖尾，ARMA模型参数$q$可以考虑选择5。
+
+但是在选择ARMA模型参数时，通过自相关系数和偏相关系数估计出的参数只能作为参考，而目前常用的信息准则为AIC、BIC、FPE等。AIC准则是最小信息准则，它的目的是判断预测目标的发展过程与哪一随机过程最为接近。在应用中，设置模型的阶数在一定范围内从低到高，对不同的阶数的模型计算AIC值，AIC值最小对应的阶数就是合适的阶数。
+
+根据自相关系数和偏相关系数估计出的参数作为范围，算出AIC指标如表\ref{tab:ARMA_AIC}所示。
+\begin{table}[htbp] 
+	\centering
+	\caption{\label{tab:ARMA_AIC}ARMA模型参数AIC结果表} 
+	\begin{tabular}{ccc} 
+		\toprule 
+		$p$ & $q$ & AIC\\ 
+		\midrule
+		2 & 5 &  -9.572221 \\
+		2 & 4 &  -9.405544 \\
+		2 & 3 &  -9.402324 \\
+		\textbf{2} & \textbf{2} &  \textbf{-9.672930} \\
+		\textbf{2} & \textbf{1} &  \textbf{-9.971523} \\
+		1 & 5 &  -9.437207 \\
+		1 & 4 &  -9.546885 \\
+		\textbf{1} & \textbf{3} &  \textbf{-9.626855} \\
+		1 & 2 &  -9.511113 \\
+		1 & 1 &  -9.299825 \\
+		\bottomrule 
+	\end{tabular} 
+\end{table}
+
+根据不同模型参数算出的AIC指标，得知模型ARMA（2,2）、ARMA（2,1）和ARMA（1,3）的AIC指标都比较小。经过进一步筛选和比较AIC指标，选取ARMA（2,1）模型，其估计结果如图\ref{HyD1ARMA21}所示。
+\pic[htbp]{HyD1的ARMA（2,1）结果图}{}{HyD1ARMA21}
+
+实验结果可以看出，系数高度显著。可以看出ARMA（2,1）模型是较优选择。确定模型后，对HyD1进行ARMA动态预测。预测结果如图\ref{POT_D1_yucebijiao}所示。
+\pic[t]{高频分量HyD1及其预测值比较图}{}{POT_D1_yucebijiao}
+
+根据以上的方法与流程，对其他高频分量HyD2至HyD7建立预测模型并进行短期预测。
+
+得到的预测模型参数如表\ref{tab:gaopin_ARMA}所示。
+\begin{table}[htbp] 
+	\centering
+	\caption{\label{tab:gaopin_ARMA}高频分量的预测模型参数表} 
+	\begin{tabular}{cc} 
+		\toprule 
+		高频分量 & 预测模型参数 \\ 
+		\midrule
+		HyD2 &  ARMA（2,3） \\
+		HyD3 &  ARMA（2,4） \\
+		HyD4 &  ARMA（3,4） \\
+		HyD5 &  ARMA（2,3） \\
+		HyD6 &  ARMA（2,4） \\
+		HyD7 &  ARMA（4,4） \\
+		\bottomrule 
+	\end{tabular} 
+\end{table}
+
+根据以上模型参数建立的ARMA模型对各个高频分量进行预测。得到的预测结果与原始时域值比较图如图\ref{pic:arma_comp}所示。
+\begin{pics}[htbp]{Hy信号高频分量的预测值与原始值比较图}{pic:arma_comp}
+	\addsubpic{HyD2及其预测值}{}{POT_D2_yucebijiao}
+	\addsubpic{HyD3及其预测值}{}{POT_D3_yucebijiao}
+	\addsubpic{HyD4及其预测值}{}{POT_D4_yucebijiao}
+	\addsubpic{HyD5及其预测值}{}{POT_D5_yucebijiao}
+	\addsubpic{HyD6及其预测值}{}{POT_D6_yucebijiao}
+	\addsubpic{HyD7及其预测值}{}{POT_D7_yucebijiao}
+\end{pics}
+\clearpage
+
+\subsection{对预测值进行小波重构}
+根据式(\ref{equ:yipk})对得到的高频预测值$d_{n,i+1}^\prime$和低频预测值$c_{J,i+1}^\prime$进行小波重构，即进行加权计算，得到最终结果如图\ref{POT_Hy_yuce}所示。
+\pic[htbp]{遥测信号Hy及其预测值Hyp}{}{POT_Hy_yuce}
+
+计算得出该预测结果的均方根误差$\mathrm{RMSE} =0.0109$，平均绝对百分比误差：$\mathrm{MAPE}  =0.0236$，平均绝对误差$\mathrm{MAE} =0.0079$。
+
+\section{实验结果比较、分析}
+下面就一些其他方法和本论文方法结果进行比较。现行比较常用的方法有，将原始时域数据直接用SVR预测方法进行预测，或者将原始数据进行小波去噪之后，使用SVR方法进行预测。用这两者方法得到的预测结果图分别如图\ref{SVR_Hy_yuce}和图\ref{QZSVR_Hy_yuce}所示。
+\pic[t]{遥测信号Hy及通过SVR方法预测值Hyp}{}{SVR_Hy_yuce}
+\pic[htbp]{遥测信号Hy及通过去噪SVR方法预测值Hyp}{}{QZSVR_Hy_yuce}
+
+比较上述两个方法和本实验方法的预测指标如表\ref{tab:fangfa_comp}所示。
+\begin{table}[htbp] 
+	\centering
+	\caption{\label{tab:fangfa_comp}高频分量的预测模型参数表} 
+	\begin{tabular}{lccc} 
+		\toprule 
+		预测方法 & RMSE & MAPE & MAE \\ 
+		\midrule
+		SVR预测方法 & 0.0160 & 0. 0347 & 0. 0115 \\ 
+		去噪SVR预测方法 & 0.0132 & 0.0282 & 0.0101 \\ 
+		本论文方法：基于趋势预测方法 & 0.0109 & 0.0236 & 0.0079 \\ 
+		\bottomrule 
+	\end{tabular} 
+\end{table}
+
+从预测指标看来，本论文的方法在每项指标上都比其他两个预测模型，预测的结果要好不少。
+\section{本章小结}
+本章主要对基于趋势的预测算法的仿真实验进行描述。
+
+首先，提出了基于趋势的预测算法的实验方案预测结果的评判指标；
+接下来，逐步讲解了仿真实验的每一步操作，并给出了逐步实验结果；
+最后给出了本论文算法方案与其他预测方法结果的比较，并进行分析。
+
+通过对实际卫星遥测数据的仿真实验，可以看出基于趋势的预测算法具有优良的现实效果，对理论算法是一次有效的验证。
