@@ -1,0 +1,439 @@
+% !Mode:: "TeX:UTF-8"
+
+\chapter{基于相似度预测算法的理论基础}{\label{chap:topos}}
+如同第\ref{chap:topot}章所说的，本论文对卫星在轨异变状态的预测算法基于两种思路进行研究，第一种是基于趋势的预测算法，第二种是基于相似度的预测算法。在本章中，将详细描述基于相似度的预测算法的理论研究。
+
+\section{相似度预测基础理论}
+
+
+\section{分形算法理论}
+\subsection{分形算法概述}
+分形最初概念起始于科学家Mandelbrot于1967年在《Science》上发表的一篇文章，提出了一个著名问题：“英国的海岸线有多长？”对于任何非内陆国家都有海岸线，其长度都与一个具体的数值相对应，但这个数值是如何得到的？一般情况下，采用折线近似方法得到，选择单位长度$\varepsilon$对其进行度量，共需要$N(\varepsilon)$个单位长度，则海岸线长度为$L(\varepsilon) = N(\varepsilon)\cdot\varepsilon$，这样通过计算可以得到其长度，但是实际计算得到结果却不够准确。因为海岸线自身自然结构的原因，包括很多与非平滑曲线类似的海湾，当选用尺度$\varepsilon$较大时，对于很多细节无法准确测量，使得测量得到的结果不存在较大误差，不够准确；若选用相对较小的测量尺度，也不能得到准确结果。随着测量尺度的减小，会发现实际上需要测量的成分会逐步增多，导致测量最终结果趋于无穷。
+
+在实验中，Mandelbrot发现，$N(\varepsilon)\cdot\varepsilon^D = \mathrm{常数}$，$D$不随单位长度发生变化，$D$一般也是非整数，$D$就被定义为其维数。
+$$ N(\varepsilon)\cdot\varepsilon^D = L_0 $$
+化简之后可得：
+$$L(\varepsilon) =  N(\varepsilon)\cdot\varepsilon = L_0 \cdot \varepsilon^{1-D}$$
+两边同时取对数可得：
+$$ \ln L(\varepsilon) = (1-D)\ln\varepsilon + \ln L_0$$
+
+可以利用测得的实际长度对数为纵坐标，选用尺度对数为横坐标，绘出直线图，通过计算斜率的方式可以求出维数$D$。这是对于$D$的最原始的求法。例如对于单位长度的线段，选取尺寸长度为$\varepsilon$对其进行测量，当$\varepsilon = 1$时，测量次数$N=1$；当$\varepsilon = 0.5$时，测量次数$N=2$；随着测量尺度$\varepsilon$的不断减小，$N$会越来越大，但是 $N(\varepsilon)\cdot\varepsilon^D$始终为常数，不发生变化。
+
+分形理论被用于异常状态诊断和预测领域主要是基于相同状态下信号的自相似性理论基础上，即同一工作状态下的信号彼此之间空间填充能力类似，分形特性非常接近。自然界中物体的自相似性不是绝对意义上的相等，而是统计意义上的相等，即允许在一定范围内存在适度波动，这种特性使得分形在诸多方面得到广泛应用，例如医院对人体血液内各项指标进行判定，通常采取适量血液对人体整体情况进行估量；在天文学中基本粒子和诸多星系之间的运动也存在着自相似性。
+
+分形维数的自相似性只存在特定的区域，即信号自身存在一定的波动性使得维数在一个合理的区间内波动，使得相同状态下计算得到的分形维数之间彼此非常接近，这是基于分形实现状态检测的重要理论基础。
+
+分形维数反映了信号的非线性特性和空间填充能力，在传统观念中，一般物体的维数以自然数形式存在，但是在实际情况中大部分物体都是以非整数的形式存在。
+
+\subsection{典型的分型维数}
+单重分形主要依靠计算单重分形维数来实现，在描述信号分形特性方面，常使用以下几种维数：容积维数（盒维数）、信息维数、关联维数、自相似维数，在故障诊断方面，通常使用盒维数与关联维数来实现。
+
+\subsubsection{盒维数}
+在讨论盒维数之前，不妨先考虑这样一个问题：如何计算一个面积为$S$的平面区域 $Z$ 的维数。假设采用边长为$\varepsilon$的正方形覆盖这个平面区域 $Z$，所需的正方形数量为 $N(\varepsilon)$，则可以得到：
+$$N(\varepsilon) = {S\over \varepsilon^2}$$
+两边取对数，得：
+$$ \ln N(\varepsilon) = \ln S + 2\ln ({1\over \varepsilon}) $$
+由此可以得到 $Z$的维数为：
+\begin{equation}
+	D(Z) = \lim \limits_{\varepsilon\rightarrow0}{\ln N(\varepsilon) \over \ln ({1\\varepsilon})} = 2
+\end{equation}
+前文提到过，对于维数的测量存在这样一个公式： $N(\varepsilon)\cdot\varepsilon^D = \mathrm{常数}$。也可以得到一个类似的等式：
+\begin{equation}
+	N(\varepsilon)\cdot\varepsilon^2 = S
+\end{equation}
+其中，$S$为二维区域 $Z$的面积，是一个常数。
+
+基于这种用集的覆盖来定义维数的思想，数学家 Kolmogorov 于 1958 年和1959 年提出了盒维数的概念，又称之为 Kolmogorov 容量维。盒维数是以尺度为$\varepsilon$ 的超立方体去覆盖集合 $X$的方式来定义的。
+
+设 $X$是$R^n$的非空有界子集，如果可以采用 $N(\varepsilon)$个边长为$\varepsilon$的超立方体将其覆盖，则有：
+\begin{equation}
+\label{equ:DBX}
+	D_B(X) =  \lim \limits_{\varepsilon\rightarrow0}{\ln N(\varepsilon) \over \ln ({1\\varepsilon})} 
+\end{equation}
+上式即为分形盒维数的定义表达式。
+
+在式(\ref{equ:DBX})中，采用的 $\varepsilon$ 覆盖是一个一般的集类，在应用于具体问题时，可以根据需要选择不同的集类作为 $\varepsilon$ 覆盖，这在定义上是等价的。在实际应用中，$N(\varepsilon)$可以取下面的几种形式：
+\begin{enumerate}[label=（\arabic*）]
+	\item 覆盖$X$的半径为$\varepsilon$的最少闭球数； 	
+	\item{\label{enumerate:erer}} 覆盖 $X$的边长为 $\varepsilon$的最少立方体数；	
+	\item{\label{enumerate:sansan}} 与  $X$相交的$\varepsilon$坐标网立方体个数；	
+	\item 覆盖 $X$的直径最大为$\varepsilon$ 的集的最少个数； 	
+	\item 球心在  $X$上，半径为$\varepsilon$ 的互不相交的球的最多个数。 	
+\end{enumerate}
+在实际的分形盒维数计算中，广泛地采用\ref{enumerate:erer}和\ref{enumerate:sansan}中所定义的 $N(\varepsilon)$，这两种形式可以使分形盒维数的计算更加有效、简便。
+
+\subsubsection{信息维数}
+根据盒维数的定义，在计算集合 $X$的盒维数时，用边长为 $\varepsilon$ 的超立方体进行覆盖，在这些超立方体中，有的是空的，有的不是空的。如果将超立方体编号，设集合 $X$落在第 $i $个超立方体中的几率为$P_i(\varepsilon)$，则用边长为 $\varepsilon$ 的超立方体进行测量，所得到的信息量用香侬（Shannon）公式表示为：
+\begin{equation}
+	I(\varepsilon) = - \sum_{i}^{N(\varepsilon)} P_i(\varepsilon) \ln P_i(\varepsilon)
+\end{equation}
+
+如果用$I(\varepsilon)$来代替盒维数定义中的$\ln N(\varepsilon)$，则可以得到信息维数：
+\begin{equation}
+	D_I = \lim \limits_{\varepsilon\rightarrow0} {I(\varepsilon) \over \ln({1\over \varepsilon})}
+\end{equation}
+即为：
+\begin{equation}
+	D_I = \lim \limits_{\varepsilon\rightarrow0} {
+		\sum_{i}^{N(\varepsilon)} P_i(\varepsilon) \ln P_i(\varepsilon)
+		 \over  \ln\varepsilon}
+\end{equation}
+
+在特定的情况下，如果集合$X$落在每个超立方体中的概率都相等，则有$P_i(\varepsilon) = {1 \over N(\varepsilon)}$，那么可得到：
+\begin{equation}
+\begin{array}{cl}
+I(\varepsilon)& = -\sum_{i}^{N(\varepsilon)} P_i(\varepsilon) \ln P_i(\varepsilon)\\
+{}& = -\sum_{i}^{N(\varepsilon)} {1\over N(\varepsilon) } \ln   {1\over N(\varepsilon) } \\
+{}& = -N(\varepsilon) \cdot {1\over N(\varepsilon) } \cdot [-\ln N(\varepsilon)]\\
+{}& = \ln N(\varepsilon) \\
+\end{array}
+\end{equation}
+此时，信息维数与盒维数相等。
+
+\subsubsection{关联维数}
+关联维数是通过点对点的关联性表示集合中所有点的相关程度。设集合$S$表示点数为$N$的时域序列$\{ x_1,x_2,\dots,x_n \}$ ，对任意常数$r(r>0)$，若任意两点距离小于$r$的点对则是有关联点对。关联点对占有的比例称为相关函数，定义如下：
+\begin{equation}
+C(r) = {1\over N^2} \sum_{i \neq j}^{N} H(\mu)
+\end{equation}
+其中，$H$是单位阶梯函数（Heaviside function）：
+$$ H(\mu) = \left\lbrace \begin{array}{cl}
+1& \mu \geqslant 0 \\
+0& \mu <0
+\end{array} \right.  $$
+$$ u = r-\left| x_i-x_j \right|  $$
+
+当$r$较大时，$\mu$始终大于0，则相关函数为1；当$r$较小时，$\mu
+$始终小于0，相关函数为0；这两种极端情况不能客观反映系统的真实性质。所以对$r$的取值范围有一定的限制，当$r$满足一定条件时，有如下关系：
+\begin{equation}
+\lim \limits_{r\rightarrow0}C(r) = r^{D_c}
+\end{equation}
+变换后可以得到：
+\begin{equation}
+\lim \limits_{r\rightarrow0}{\ln (C(r)) \over \ln r}
+\end{equation}
+其中$D_c$即为关联维数。
+
+在针对单重分形的异常状态检测的实际应用中，盒维数与关联维数应用最为广泛。其中关联维数对信号的不均匀性反映敏感，可以有效区分不同的工作状态；但是关联维数计算相对复杂，计算时通过相空间重构方法实现，参数变量多。因此分形盒维数常常对于快速的诊断故障，关联维数用于敏感测量。
+
+\subsection{分型维数计算方法}
+\subsubsection{盒维数的计算方法}
+用于描述信号的分形特征使用的主要特征参数是分形维数，对于计算机而言，直接通过盒维数的定义来对其进行计算是非常不方便的，网格维数与盒维数等效，其计算方法适合计算机处理。
+
+对实际采集的信号序列${ x_1,x_2,\dots,x_n}$，采样频率$f_s$ ,采样间隔 $T_s = {1\over f_s}$，该信号的网格维数为：
+\begin{equation}
+	d = -{\ln (\sum \left| x_{i+1}-x_i \right| ) /\varDelta t
+		\over \ln \varDelta t}
+\end{equation}
+
+网格维数从盒维数的测度上反映了信号的分形特性，由于不同状态下的信号具有不同的分形特性，因此网格维数可以用于特征量，从而对不同状态进行判定。
+
+\subsubsection{关联维数的计算方法}
+关联维数在状态空间中是重要的几何参数，是对于描述该空间所需变量个数的描述。分形维数对于事物分形特征可以进行定量描述，非常重要，这是分形能够广泛应用于诸多领域的重要理论基础。
+
+设$\{ X_k | k = 1,2,\dots,n \}$是采样得到的信号序列，对信号序列进行相空间重构，其结果记为$X_k(m,\tau) = (x_n,x_{n+\tau},\dots,x_{n+(-1)\tau})$，$m$是重构相空间的维数，$\tau$是时间延迟。定义重构相空间的关联维数
+\begin{equation}
+	D = \lim\limits_{r\rightarrow 0}{d \ln C_r \over d \ln r}
+\end{equation}
+因此对于关联维数的计算步骤是：
+\begin{enumerate}[label=（\arabic*）]
+	\item 对时间序列进行规格化处理，依据相关原则确定重构相空间嵌入维数$m$，构建$m$维空间的相应矢量。
+	\item 求得两个矢量间的距离 $r_{ij} = \left| y_i - y_j \right| $。
+	\item 对任意$r\in (0,1]$，通过比较所有点对的距离值和$r$值，计算距离小于$r$的点对所占比例：
+	\begin{equation}
+		C_r = {1\over N(N-1)} \sum_{i=1}^{N-m+1}\sum_{j=1}^{N-m+1}
+		H(r-\left| X_i-X-j \right| )
+	\end{equation}
+	合理调整r的取值，使 $C_r \propto r^{D_k}$
+	\item 通过关联维数计算公式
+	$$
+	D_h = \lim\limits_{r\rightarrow 0}{d \ln C_r \over d \ln r}
+	$$
+	就可以求得对应信号序列的关联维数。
+\end{enumerate}
+
+关联维数对信号不均匀性反映敏感，更能反映信号的动态结构，对于信号的分形特征分析一般也通过计算关联维数来实现。
+
+\subsection{分型维数应用于异变数据}
+
+
+\section{模糊聚类算法理论}
+模糊聚类方法是基于 Zadeh 教授在1965年提出的模糊理论与聚类分析相结合的产物\citeup{zadeh1965fuzzy}。模糊聚类方法能够对类与类之间有交叉的数据样本集进行有效的聚类，所得的聚类结果明显优于硬聚类方法。由于模糊聚类建立了数据样本对于类别的不确定性的描述，表达了样本类属的模糊性，因此能够更客观地反应现实世界，成为聚类分析研究的热点和主流。
+
+\subsection{模糊聚类的分析步骤}
+模糊聚类分析步骤可以概括为：数据标准化，建立模糊相似矩阵，聚类。
+
+\subsubsection{数据标准化}
+在实际课题中，不同的数据可能有不同的量纲。为了使不同量纲的数据也能进行比较，需要对数据进行适当变换。根据模糊矩阵的要求将数据压缩到区间$[0,1]$。
+设论域$U=[u_1,u_2,\dots,u_n]$为被分类的对象，每个元素又由$m$个数据表示，对第$i$个元素有
+$$ u_i=[x_{i1},x_{i2},\dots,x_{im}]\qquad(i=1,2,\dots,m)  $$
+
+这时的原始数据矩阵为：
+$$ \left[  \begin{matrix}
+x_{11} & \cdots & x_{1m} \\
+\vdots & \ddots & \vdots \\
+x_{n1} & \cdots & x_{nm}
+\end{matrix} \right]  $$
+其中：$x_{nm}$表示第$n$个分类对象的第$m$个指标的原始数据。
+
+\begin{enumerate}[label=（\arabic*）]
+	\item 标准差变换
+		\begin{equation}
+			x_{ik}^\prime = {x_{ik} - \bar{x_k} \over s_k} 
+			\qquad (i = 1,2,\dots,n;k = 1,2,\dots,m)
+		\end{equation}
+		其中，$$\bar{u_k} = {1\over n} \sum_{i=1}^{m}x_{ik}, s_k = \sqrt{ {1\over n}\sum_{i=1}^{m}{x_{ik} - \bar{x_k}}^2 }$$经过变换后，每个变量的均值为0，标准差为1，并可以消除量纲的影响。
+	\item 极差变换
+		\begin{equation}
+			 x_{ik}^{\prime\prime} = {
+			 	x_{ik}^\prime-\min\limits_{1 \leqslant i \leqslant n}{x_{ik}^\prime}
+			 	\over 
+			 	\max\limits_{1 \leqslant i \leqslant n}{x_{ik}^\prime}-\min\limits_{1 \leqslant i \leqslant n}{x_{ik}^\prime}}
+		\end{equation}
+		经过极差变换后有$0 \leqslant x_{ik}^{\prime\prime} \leqslant 1$，并且消除了量纲的影响。
+	\item 对数变换
+		\begin{equation}
+			x_{ik}^\prime = \lg x_{ik} \qquad (i = 1,2,\dots,n;k = 1,2,\dots,m)
+		\end{equation}
+		取对数以缩小变量间的数量级。
+\end{enumerate}
+
+\subsubsection{建立模糊相似矩阵}
+建立模糊相似矩阵又称为标定，即标出衡量被分类对象间相似程度的统计量$r_ij (i,j=1,2,\dots,n)$。
+
+设论域$U={u_1,u_2,\dots,u_n}$，其中每一个元素为一个样本，建立$U$上的相似关系$R$，$R $表示相似矩阵$r_ij=R(u_i,u_j)$。每个样本为$m$维向量，$u_i={x_i1,x_i2,\dots,x_im}$。
+
+计算$r_ij$可以用以下方法： 
+\begin{enumerate}[label=（\arabic*）]
+	\item 相似系数法
+	
+	\begin{enumerate}[label=（\alph*）]
+		\item 数量积法
+		\begin{equation}
+			r_{ij} = \left\lbrace 
+			\begin{array}{cl}
+			1 & i=j \\
+			{1\over M}\sum_{k=1}^{m} x_{ik}x_{jk} &  i\neq j
+			\end{array}
+			\right. 
+		\end{equation}
+		其中，$$ M = \max\limits_{i\neq j}\left( \sum_{k=1}^{m} x_{ik}x_{jk}   \right)  $$
+		显然$\left| r_{ij} \right| \in[0,1]$，如果$r_{ij}$中出现负数，需要再进行变换：$$ r_{ij}^\prime = {r_{ij}+1\over 2}$$
+		\item 夹角余弦法
+		\begin{equation}
+			r_{ij} = {\left| \sum_{k=1}^{m} x_{ik}x_{jk}  \right| 
+				\over 
+				\sqrt{\sum_{k=1}^{m} x_{ik}^2 }\sqrt{\sum_{k=1}^{m} x_{jk}^2 }}
+		\end{equation}
+		\item 相关系数法
+		\begin{equation}
+			r_{ij} = { \sum_{k=1}^{m} \left| x_{ik}-\bar{x_i} \right|  \left| x_{jk}-\bar{x_j}  \right| 
+				\over 
+				\sqrt{\sum_{k=1}^{m} {(x_{ik}-\bar{x_i})}^2 }\sqrt{\sum_{k=1}^{m} {(x_{jk}-\bar{x_j})}^2 }}
+		\end{equation}
+		其中，$\bar{x_i} = {1\over m} \sum_{k=1}^{m} x_{ik}$，$\bar{x_j} = {1\over m} \sum_{k=1}^{m} x_{jk}$。
+		\item 指数相似系数法
+		\begin{equation}
+			r_{ij} = {1\over m} \sum_{k=1}^{m} \mathrm{exp}(-{3\over 4}\cdot {{(x_{ik}-x_{jk})}^2\over s_k^2})
+		\end{equation}
+		其中，$s_k^2 = {1\over n}\sum_{i=1}^{n}{(x_{ik}-x_{jk})}^2$，$\bar{x_k} = {1\over n}\sum_{k=1}^{n}x_{ik}$。
+		\item 最大最小法
+		\begin{equation}
+			r_{ij} = {\sum_{k=1}^{m} \min (x_{ik},x_{jk})
+				 \over
+				 \sum_{k=1}^{m} \max (x_{ik},x_{jk})}
+		\end{equation}
+		\item 算术平均最小法
+			\begin{equation}
+			r_{ij} = {\sum_{k=1}^{m} \min (x_{ik},x_{jk})
+				\over
+				{1\over 2}\sum_{k=1}^{m} (x_{ik}+x_{jk})}
+			\end{equation}
+		\item 几何平均最小法
+			\begin{equation}
+			r_{ij} = {\sum_{k=1}^{m} \min (x_{ik},x_{jk})
+				\over
+				\sum_{k=1}^{m} \sqrt{x_{ik}x_{jk}}}
+			\end{equation}
+	\end{enumerate}
+	\item 距离法
+	
+	\begin{enumerate}[label=（\alph*）]
+		\item 绝对值倒数法
+		\begin{equation}
+			r_{ij} = \left\lbrace 
+			\begin{array}{cl}
+			1 & i=j \\
+			{M \over \sum_{k=1}^{m} \left| x_{ik}-x_{jk} \right| } &  i\neq j
+			\end{array}
+			\right. 
+		\end{equation}
+		其中，$M$需要适当选取，使$0\leqslant r_{ij}\leqslant1$。
+		\item 绝对值指数法
+			\begin{equation}
+				r_{ij} = \mathrm{exp}(-\sum_{k=1}^{m} \left| x_{ik}-x_{jk} \right| )
+			\end{equation}
+		\item 直接距离法
+			\begin{equation}
+				r_{ij} = 1-d(u_i,u_j)
+			\end{equation}
+		其中，$c$为适当选取系数，使得$0\leqslant r_{ij}\leqslant1$。$d(u_i,u_j)$为距离，经常使用的距离有以下几种：
+		\begin{itemize}
+			\item 海明距离：
+				\begin{equation}
+					d(u_i,u_j) = \sum_{k=1}^{m} \left| x_{ik}-x_{jk} \right|
+				\end{equation}
+			\item 欧式距离：
+				\begin{equation}
+				d(u_i,u_j) = \sqrt{\sum_{k=1}^{m} {(x_{ik}-x_{jk})}^2}
+				\end{equation}
+			\item 切比雪夫距离：
+				\begin{equation}
+					d(u_i,u_j) = \max \left| x_{ik}-x_{jk} \right| 
+					\qquad (1\leqslant k \leqslant m)
+				\end{equation}
+		\end{itemize}
+		
+	\end{enumerate}
+	\item 主观评分法
+		请专家直接对$u_i$和$u_j$的相似度评分，也是一种有效方法。
+		\begin{enumerate}[label=（\alph*）]
+			\item 百分制
+			
+			采用百分制时，将评出的总分数除以 100，即得闭区间$[0,1]$的一个$r_ij$。为降低其主观性，可以请多个专家参与评分，再取平均定出$r_ij$。
+			\item 相似度和自信度
+			
+			假定请N个专家组成专家组，这时有
+				\begin{equation}
+					r_{ij} = {\sum_{k=1}^{N} r_{ij}(k) a_{ij}(k)
+						\over
+						\sum_{k=1}^{N} a_{ij}(k)}
+				\end{equation}
+				式中，$r_{ij} (k)$为第k个专家所给出$u_i$和$u_j$的相似度，$a_{ij}(k)$是专家对自己给出相似度时的自信度。$r_{ij}$和$a_{ij}$都是在$[0,1]$区间的数值。
+		\end{enumerate}
+\end{enumerate}
+
+\subsubsection{基于模糊等价关系的聚类方法}
+\begin{enumerate}[label=（\arabic*）]
+	\item  传递闭包法
+	
+	根据标定所建立的模糊矩阵$\tilde{R}$；一般来说仅具有自反性和对称性，不满足传递性，只是模糊相似矩阵，只有当$\tilde{R}$是模糊等价矩阵时才能聚类，故需要将$\tilde{R}$改造成模糊等价矩阵。
+	\item  直接聚类
+	
+	直接聚类是在建立模糊相似矩阵之后，不用传递闭包$t(\tilde{R})$，而直接从模糊相似矩阵进行聚类。步骤如下：
+	\begin{enumerate}[label=（\alph*）]
+		\item 取$\tilde{R}$中的最大值$\lambda_1=1$，对每个$\mu_i$作相似类${[\mu_i]}_{\tilde{R}}$，且$$ {[\mu_i]}_{\tilde{R}} = \{\mu_i | r_ij = 1 \} $$
+		
+		\item{\label{enumerate:II}} 将满足$r_ij=1$的$x_i$和$x_j$放在一类，构成相似类。不同的相似类可能存在公共元素，此时将有公共元素的相似类合并，即可得$\lambda_1=1$水平上的等价分类；
+		\item{\label{enumerate:III}} 取$\lambda_2$为次大值，从中$\tilde{R}$找到满足$\lambda_2$的等价类，再与\ref{enumerate:II}的$\lambda_1$水平上的等价类进行合并，最终得出对应$\lambda_2$的等价分类； 
+		\item 取$\lambda_3$为第三大值，从$\tilde{R}$中找出相似度$\lambda_3$的等价类，然后与\ref{enumerate:III}的 $\lambda_2$ 水平上的等价类合并，得出$\lambda_3$水平上的等价分类；
+	\end{enumerate}
+	以此类推，直到合并到$U$成为一类为止。
+	
+	\item  分类的$F$检验
+	
+	从上面方法可知，模糊聚类分析是动态的，对于不同的$\lambda \in[0,1]$，可以获得不同的分类。随着$\lambda$的变化而形成的多种分类对全面了解样本情况是有利的。但在实际应用中需要选择阈值$\lambda$，从而给出一个较明确的分类。用统计学的$F$检验方法可以剔除一些不够格的类，使分类变为较为清晰。
+	
+	设论域$U={u_1,u_2,\dots,u_n}$是样本数为n的样本空间，而每个样本$μ_i$有$m$个特征，即$μ_i=(x_{i1},x_{i2},\dots,x_{im})$，由此得到原始的数据矩阵。
+	
+	总体样本的中心向量为
+	\begin{equation}
+		\bar{u} = (\bar{u}_1,\bar{u}_2,\dots,\bar{u}_k,\dots,\bar{u}_n)
+	\end{equation}
+	其中$\bar{u}_k = {1\over n}\sum_{i=1}^{n}x_{ik} , (k=1,2,\dots,m)$。
+	
+	设对应于$\lambda$值得分类数为$r$。其样本标记为$u_1^{(j)},u_2^{(j)} , \dots , u_n^{(j)}$，第$j$类的样本数为$n_j$。第$j$类的聚类中心为：
+	\begin{equation}
+		\bar{u}^{(j)} = (\bar{u}_1^{(j)},\bar{u}_2^{(j)},\dots,\bar{u}_k^{(j)},\dots,\bar{u}_n^{(j)})
+	\end{equation}
+	其中，$\bar{u}_k^{(j)} = {1\over n_j} \sum_{i=1}^{n_j} x_{ik}^{(j)} \qquad (k=1,2,\dots,m)$作$F$统计量
+	\begin{equation}
+		F = {\sum_{j=1}^{r} n_j {\left\| {\bar{u}}^{(j)}-\bar{u} \right\| }^2 / (r-1)
+			\over 
+	\sum_{j=1}^{r} \sum_{i=1}^{n_j}	{\left\| u_i^{(j)}-\bar{u}^{(j)} \right\| }^2/(n-r)	}
+	\end{equation}
+	其中$\left\| {\bar{u}}^{(j)}-\bar{u} \right\|  = \sqrt{\sum_{k=1}^{m}{({\bar{u}}^{(j)}-\bar{u})}^2}$。
+	
+	$F$统计量服从自由度$r-1$，$n-r$的$F$分布。分子表示类与类之间的距离，分母表示类内样本间的距离。$F$值越大，说明类与类之间的距离越大，表示类与类之间差异越大，分类越明显。
+	
+\end{enumerate}
+
+\subsection{模糊C均值聚类算法}
+文献中研究最多、实际中应用最广的是基于目标函数的模糊聚类方法，该类方法把聚类问题描述为一个带约束的优化问题，通过求解优化问题的解来确定数据集的模糊划分和聚类结果。此类算法设计简单易于应用且聚类性能良好，并借助于经典的数学非线性规划理论来求解优化问题，容易编程实现。因此，基于目标函数的模糊聚类成为新的研究主流。
+
+基于目标函数的聚类算法中模糊C均值（Fuzzy  C-Means ， FCM）算法的理论最为完善、应用最为广泛。FCM 算法首先是由 E.Ruspini 提出来的，后来 J.C.Dunn 与 J.C.Bezdek 将 E.Ruspini 算法从硬聚类算法推广成模糊聚类算法。FCM 算法是基于对目标函数优化的一种逐步迭代的数据聚类方法，每一步的迭代都沿着目标函数减小的方向进行。聚类结果是每一个数据点对聚类中心的隶属程度，该隶属程度用一个数值来表示。为了借助目标函数法求解聚类问题，人们利用均方逼近理论构造了带约束的非线性规划函数，从此类内平方误差和（WGSS）成为聚类目标函数的普遍形式。为极小化该目标函数而采取 Pikard 迭代优化方案就是著名的硬C均值算法和ISODATA（Iterative Self-Organizing Data Analysis Technique A）算法。模糊划分的概念提出后，Dunn 首先把 WGSS 函数扩展到了—类内加权平均误差和函数，后来Bezdek 又引入了一个参数，把如推广到一个目标函数的无限族，并给出了交替优化（AO，Alternative Optimization）算法，即为人们所熟知的 FCM 算法。从此，奠定了 FCM 算法在模糊聚类中的地位。FCM 算法在模式识别、语音识别、图像处理以及空间导航系统等领域得到广泛应用，是模糊聚类的最主要的实用算法之一。
+
+\subsubsection{FCM算法的基本原理}
+FCM聚类算法是一种能自动对样本点进行分类的方法，通过优化准则函数来确定每个样本点对类中心的隶属度，从而决定样本所属的类。其中为各样本与其所在类中心的误差平方和。FCM 算法实现原理如下。
+
+设样本集合$X = \{ x_1,x_2,\dots,x_i,\dots,x_n \}$中元素$x_i$有$s$个特征，即$x_i = \{ x_{i1},x_{i2},\dots,x_{is} \}$，要把$X$分为$c$类，$(2\leqslant c\leqslant n)$。
+
+设有$c$个聚类中心$V = \{ v_1,v_2,\dots,v_c \}$，取$d_{ik}$为样本，$x_k$与聚类中心$v_i$的欧式距离，记作：
+\begin{equation}
+	d_{ik} = \left\| x_k-v_i \right\|  = \sqrt{\sum_{j=1}^{s}{x_{kj}-v_{ij}}^2}
+\end{equation}
+
+聚类准则是使得下列目标函数达到最小值
+\begin{equation}
+\label{equ:minJ}
+	\min J_{FCM}(X,U,V) = \sum_{k=1}^{n}\sum_{i=1}^{c} u_{ik}^m{(d_{ik})}^2
+\end{equation}
+其中： $u_{ik}$表示第$k$个样本在第$i$类中的隶属度，且满足
+\begin{equation}
+\label{equ:sumuik}
+	\sum_{i=1}^{c} u_{ik} = 1
+\end{equation}
+$m$是模糊因子用来决定聚类结果模糊度的权重指数，$m\in [1,\infty)$，取其经验值范围为$1.5\leqslant m\leqslant 2.5$。结合应用 Lagrange 乘数法，结合式(\ref{equ:sumuik})的约束条件对式(\ref{equ:minJ})求解，可得模糊划分矩阵$U$和聚类原型$V$更新公式如下：
+\begin{equation}
+\label{equ:uik}
+	u_{ik} = \left\lbrace 
+				\begin{array}{cl}
+				{{\left\| x_k-v_i \right\|}^{-{2\over m-1}}
+					\over 
+				\sum_{j=1}^{c}{\left\| x_k-v_j \right\|}^{-{2\over m-1}}	}& \left\| x_k-v_j \right\| > 0(1\leqslant j\leqslant c)\\
+				1& \left\| x_k-v_i \right\| = 0(1\leqslant i\leqslant c) \\
+				0& \exists j,j\neq i,\left\| x_k-v_j \right\| = 0
+				\end{array}
+				 \right. 
+\end{equation}
+\begin{equation}
+\label{equ:vi}
+	v_i = {\sum_{k=1}^{n} u_{ik}^m \cdot x_k
+			\over 
+			\sum_{k=1}^{n} u_{ik}^m }
+\end{equation}
+
+\subsubsection{FCM算法的流程及具体步骤}
+FCM算法流程图如图\ref{plan_fcm}所示：
+\pic[t]{FCM算法流程图}{}{plan_fcm} 
+
+FCM算法的具体步骤如下：
+\begin{enumerate}[label=（\arabic*）]
+	\item 初始化：给定聚类类别数$c(2\leqslant c\leqslant n)$，$n$
+	为样本个数；给定模糊权数$m$（一般取2）；设定迭代停止阈值$\varepsilon$（一般取0.001至	0.01）；设置迭代计数次数$l$，初始化聚类原型$V^{(l)}(l=0)$；
+	\item{\label{enumerate:er}} 根据$V^{(l)}$，按照公式(\ref{equ:uik})更新模糊划分矩阵$U^{l+1}$得：
+	\begin{equation}
+		u_{ik}^{(l+1)} = {({d_{ik}^{(j)}
+				\over
+				\sum_{j=1}^{c}d_{jk}^{(j)}
+				})}^{-{2\over m-1}}
+	\end{equation}
+	\item 根据$U^{(l)}$，按照公式(\ref{equ:vi})计算新的聚类中心矩阵$V^{l+1}$得：
+	\begin{equation}
+		v_{i}^{(l+1)} = {\sum_{k=1}^{n}{(u_{ik}^{(j)})}^m\cdot x_k
+				\over
+				\sum_{k=1}^{n}{(u_{ik}^{(j)})}^m
+			}
+	\end{equation}
+	\item 判定阈值：根据给定的阈值$\varepsilon$	，如果$\left\| V^{(j+1)}-V^{(j)} \right\|$ ，则停止迭代，否则$l=l+1$，转到\ref{enumerate:er}。 
+\end{enumerate}
+
+\subsubsection{FCM算法的优点}
+FCM算法的优点主要表现在以下几个方面：
+\begin{enumerate}[label=（\arabic*）]
+	\item FCM算法是硬C均值算法的推广，由于硬C均值函数在理论上的研究已经相当完善，这就为FCM	算法的研究提供了条件；
+	\item FCM算法结构简单，可转化为目标函数的优化问题，可借助最优化理论进行研究；
+	\item FCM算法的目标函数与希尔伯特空间结构有密切的关系，因此具有深厚的数学基础，且复杂度低，应用效果好；
+	\item FCM算法研究成熟，算法稍做改动即可适用于某些特定的领域，目前已经在很多领域获得了非常成功的应用。
+\end{enumerate}
+
+\section{本章小结}
